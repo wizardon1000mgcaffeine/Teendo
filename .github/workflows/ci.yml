@@ -1,0 +1,46 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔽 Repository klónozása
+        uses: actions/checkout@v4
+
+      - name: ☕ JDK beállítása
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: 📦 Maven cache használata
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven
+
+      - name: ✅ Build és teszt lefuttatása
+        run: mvn clean verify
+
+      - name: 📊 Jacoco coverage jelentés
+        run: mvn jacoco:report
+
+      - name: ✅ Jacoco coverage ellenőrzés (60%+)
+        run: mvn jacoco:check
+
+      - name: 🧹 Checkstyle futtatása
+        run: mvn checkstyle:check
+
+      - name: 📦 Artifact mentése (target/*.jar)
+        uses: actions/upload-artifact@v4
+        with:
+          name: teendo-jar
+          path: target/*.jar
